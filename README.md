@@ -32,7 +32,7 @@ match @sys_locale.current() {
 }
 ```
 
-More usage snippets live in [`examples/`](examples/README.md).
+More usage snippets live in [`src/examples/`](src/examples/README.md).
 
 ## Notes
 
