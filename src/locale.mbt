@@ -11,9 +11,7 @@ pub struct Locale {
 } derive(Eq, Show)
 
 ///|
-/// Returns the current locale, if the platform exposes one.
-pub fn current() -> Locale? {
-  let locales = preferred()
+fn first_locale(locales : Array[Locale]) -> Locale? {
   if locales.length() == 0 {
     None
   } else {
@@ -22,12 +20,23 @@ pub fn current() -> Locale? {
 }
 
 ///|
-/// Returns the normalized tag for the current locale.
-pub fn current_tag() -> String? {
-  match current() {
+fn locale_tag(locale : Locale?) -> String? {
+  match locale {
     Some(locale) => Some(locale.tag)
     None => None
   }
+}
+
+///|
+/// Returns the current locale, if the platform exposes one.
+pub fn current() -> Locale? {
+  first_locale(preferred())
+}
+
+///|
+/// Returns the normalized tag for the current locale.
+pub fn current_tag() -> String? {
+  locale_tag(current())
 }
 
 ///|
@@ -61,8 +70,5 @@ pub fn parse(raw : String) -> Locale? {
 ///|
 /// Returns the canonical locale tag for a raw locale string.
 pub fn canonicalize(raw : String) -> String? {
-  match parse(raw) {
-    Some(locale) => Some(locale.tag)
-    None => None
-  }
+  locale_tag(parse(raw))
 }
