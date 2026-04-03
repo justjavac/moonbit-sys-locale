@@ -1,2 +1,14 @@
+codecov:
+  notify:
+    after_n_builds: 3
+
+flags:
+  linux:
+    carryforward: true
+  macos:
+    carryforward: true
+  windows:
+    carryforward: true
+
 comment:
   layout: "diff, files"

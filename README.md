@@ -2,6 +2,9 @@
 
 [![CI](https://github.com/justjavac/moonbit-sys-locale/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/justjavac/moonbit-sys-locale/actions/workflows/ci.yml)
 [![coverage](https://img.shields.io/codecov/c/github/justjavac/moonbit-sys-locale/main?label=coverage)](https://codecov.io/gh/justjavac/moonbit-sys-locale)
+[![linux](https://img.shields.io/codecov/c/github/justjavac/moonbit-sys-locale/main?flag=linux&label=linux)](https://codecov.io/gh/justjavac/moonbit-sys-locale)
+[![macos](https://img.shields.io/codecov/c/github/justjavac/moonbit-sys-locale/main?flag=macos&label=macos)](https://codecov.io/gh/justjavac/moonbit-sys-locale)
+[![windows](https://img.shields.io/codecov/c/github/justjavac/moonbit-sys-locale/main?flag=windows&label=windows)](https://codecov.io/gh/justjavac/moonbit-sys-locale)
 
 Read the current system locale and preferred locale list from MoonBit, with
 normalization for common native spellings such as `en_US.UTF-8`.
