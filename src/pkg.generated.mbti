@@ -1,0 +1,30 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "justjavac/sys_locale"
+
+// Values
+pub fn canonicalize(String) -> String?
+
+pub fn current() -> Locale?
+
+pub fn current_tag() -> String?
+
+pub fn parse(String) -> Locale?
+
+pub fn preferred() -> Array[Locale]
+
+pub fn preferred_tags() -> Array[String]
+
+// Errors
+
+// Types and methods
+pub struct Locale {
+  tag : String
+  language : String
+  script : String?
+  region : String?
+} derive(Eq, Show)
+
+// Type aliases
+
+// Traits
+

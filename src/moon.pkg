@@ -1,0 +1,14 @@
+import {
+  "moonbitlang/core/env",
+}
+
+import {
+  "moonbitlang/core/env",
+} for "test"
+
+supported_targets = "native"
+
+options(
+  "native-stub": [ "locale_native.c" ],
+  targets: { "locale_native.mbt": [ "native", "llvm" ] },
+)
