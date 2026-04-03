@@ -4,7 +4,7 @@
   "source": "src",
   "readme": "README.md",
   "repository": "https://github.com/justjavac/moonbit-sys-locale",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "keywords": ["locale", "i18n", "l10n", "system"],
   "description": "Native system locale discovery and normalization for MoonBit.",
   "preferred-target": "native",
