@@ -1,18 +1,24 @@
 ///|
+fn append_optional_locale_candidate(
+  target : Array[String],
+  locale : String?,
+) -> Unit {
+  match locale {
+    Some(locale) => push_candidate(target, locale)
+    None => ()
+  }
+}
+
+///|
 fn locale_raw_candidates_internal() -> Array[String] {
   let result : Array[String] = []
   append_env_locale_candidates(result)
-  match native_system_locale() {
-    Some(locale) => push_candidate(result, locale)
-    None => ()
-  }
+  append_optional_locale_candidate(result, native_system_locale())
   result
 }
 
 ///|
-fn native_system_locale() -> String? {
-  let buf = Bytes::new(128)
-  let written = native_system_locale_ffi(buf, buf.length())
+fn decode_native_system_locale(buf : Bytes, written : Int) -> String? {
   if written <= 0 {
     None
   } else {
@@ -20,6 +26,13 @@ fn native_system_locale() -> String? {
       _ => None
     }
   }
+}
+
+///|
+fn native_system_locale() -> String? {
+  let buf = Bytes::new(128)
+  let written = native_system_locale_ffi(buf, buf.length())
+  decode_native_system_locale(buf, written)
 }
 
 ///|
