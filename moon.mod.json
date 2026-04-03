@@ -2,7 +2,7 @@
   "name": "justjavac/sys_locale",
   "version": "0.1.0",
   "source": "src",
-  "readme": "README.md",
+  "readme": "README.mbt.md",
   "repository": "https://github.com/justjavac/moonbit-sys-locale",
   "license": "MIT",
   "keywords": ["locale", "i18n", "l10n", "system"],
