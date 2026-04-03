@@ -1,8 +1,4 @@
-// Example: print every preferred locale in order.
-//
-// Add the dependency first:
-//   moon add justjavac/sys_locale
-
+///|
 fn main {
   let locales = @sys_locale.preferred()
   if locales.length() == 0 {

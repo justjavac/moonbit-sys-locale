@@ -4,18 +4,25 @@ These examples are small usage snippets for `justjavac/sys_locale`.
 
 ## Current locale
 
-See [`current_locale.mbt`](current_locale.mbt) for a minimal example that reads
-the current locale and prints the normalized tag.
+See [`current_locale/main.mbt`](current_locale/main.mbt) for a minimal example
+that reads the current locale and prints the normalized tag.
 
 ## Preferred locales
 
-See [`preferred_locales.mbt`](preferred_locales.mbt) for iterating over every
-locale discovered from the process environment and native system fallback.
+See [`preferred_locales/main.mbt`](preferred_locales/main.mbt) for iterating
+over every locale discovered from the process environment and native system
+fallback.
 
 ## Running the snippets
 
-The files in this directory are example source snippets meant to be copied into
-your own MoonBit project after adding the dependency:
+Run the examples from the module root:
+
+```bash
+moon run src/examples/current_locale --target native
+moon run src/examples/preferred_locales --target native
+```
+
+If you want to copy the code into your own project, add the dependency first:
 
 ```bash
 moon add justjavac/sys_locale
