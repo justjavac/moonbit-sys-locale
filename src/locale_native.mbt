@@ -16,7 +16,9 @@ fn native_system_locale() -> String? {
   if written <= 0 {
     None
   } else {
-    Some(@utf8.decode(buf[:written])) catch { _ => None }
+    Some(@utf8.decode(buf[:written])) catch {
+      _ => None
+    }
   }
 }
 
