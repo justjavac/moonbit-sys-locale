@@ -1,4 +1,5 @@
 ///|
+/// Parses and deduplicates locale candidates in preference order.
 fn locales_from_raw_candidates(raw_candidates : Array[String]) -> Array[Locale] {
   let locales : Array[Locale] = []
   let seen : Map[String, Bool] = {}
@@ -19,6 +20,7 @@ fn locales_from_raw_candidates(raw_candidates : Array[String]) -> Array[Locale] 
 }
 
 ///|
+/// Appends locale-related environment variable values in precedence order.
 fn append_env_locale_candidates(target : Array[String]) -> Unit {
   for key in ["LC_ALL", "LC_MESSAGES", "LANGUAGE", "LANG"] {
     match @env.get_env_var(key) {
@@ -29,6 +31,7 @@ fn append_env_locale_candidates(target : Array[String]) -> Unit {
 }
 
 ///|
+/// Trims and stores a non-empty raw locale candidate.
 fn push_candidate(target : Array[String], raw : String) -> Unit {
   let trimmed = raw.trim().to_string()
   if trimmed != "" {
@@ -37,6 +40,7 @@ fn push_candidate(target : Array[String], raw : String) -> Unit {
 }
 
 ///|
+/// Splits a locale preference list on `:` and `,`.
 fn split_locale_list(raw : String) -> Array[String] {
   let items : Array[String] = []
   let mut buf = StringBuilder::new(size_hint=raw.length())
@@ -59,6 +63,7 @@ fn split_locale_list(raw : String) -> Array[String] {
 }
 
 ///|
+/// Parses a raw locale string into a normalized locale record.
 fn parse_locale(raw : String) -> Locale? {
   let trimmed = raw.trim().to_string()
   if trimmed == "" {
@@ -115,6 +120,7 @@ fn parse_locale(raw : String) -> Locale? {
 }
 
 ///|
+/// Returns the prefix before the first marker.
 fn strip_after(raw : String, marker : StringView) -> String {
   match raw.split_once(marker) {
     Some((prefix, _)) => prefix.to_string()
@@ -123,6 +129,7 @@ fn strip_after(raw : String, marker : StringView) -> String {
 }
 
 ///|
+/// Replaces POSIX locale separators with BCP 47 separators.
 fn normalize_separators(raw : String) -> String {
   let buf = StringBuilder::new(size_hint=raw.length())
   for ch in raw {
@@ -136,6 +143,7 @@ fn normalize_separators(raw : String) -> String {
 }
 
 ///|
+/// Splits a string and drops empty trimmed pieces.
 fn split_nonempty(raw : String, sep : StringView) -> Array[String] {
   let parts : Array[String] = []
   for part in raw.split(sep) {
@@ -148,6 +156,7 @@ fn split_nonempty(raw : String, sep : StringView) -> Array[String] {
 }
 
 ///|
+/// Validates and normalizes a language subtag.
 fn parse_language_subtag(raw : String) -> String? {
   if raw.length() < 2 || raw.length() > 8 || !is_ascii_alpha(raw) {
     None
@@ -157,6 +166,7 @@ fn parse_language_subtag(raw : String) -> String? {
 }
 
 ///|
+/// Validates and normalizes a script subtag.
 fn parse_script_subtag(raw : String) -> String? {
   if raw.length() != 4 || !is_ascii_alpha(raw) {
     None
@@ -166,6 +176,7 @@ fn parse_script_subtag(raw : String) -> String? {
 }
 
 ///|
+/// Validates and normalizes a region subtag.
 fn parse_region_subtag(raw : String) -> String? {
   if raw.length() == 2 && is_ascii_alpha(raw) {
     Some(raw.to_upper())
@@ -177,6 +188,7 @@ fn parse_region_subtag(raw : String) -> String? {
 }
 
 ///|
+/// Validates and normalizes trailing variant subtags.
 fn canonicalize_extra_subtag(raw : String) -> String? {
   if raw.length() == 0 || raw.length() > 8 || !is_ascii_alnum(raw) {
     None
@@ -186,6 +198,7 @@ fn canonicalize_extra_subtag(raw : String) -> String? {
 }
 
 ///|
+/// Reports whether every character is ASCII alphabetic.
 fn is_ascii_alpha(raw : String) -> Bool {
   if raw == "" {
     return false
@@ -199,6 +212,7 @@ fn is_ascii_alpha(raw : String) -> Bool {
 }
 
 ///|
+/// Reports whether every character is an ASCII digit.
 fn is_ascii_digit(raw : String) -> Bool {
   if raw == "" {
     return false
@@ -212,6 +226,7 @@ fn is_ascii_digit(raw : String) -> Bool {
 }
 
 ///|
+/// Reports whether every character is ASCII alphanumeric.
 fn is_ascii_alnum(raw : String) -> Bool {
   if raw == "" {
     return false
@@ -225,6 +240,7 @@ fn is_ascii_alnum(raw : String) -> Bool {
 }
 
 ///|
+/// Title-cases an ASCII script subtag.
 fn titlecase_ascii(raw : String) -> String {
   let buf = StringBuilder::new(size_hint=raw.length())
   let mut is_first = true
@@ -240,6 +256,7 @@ fn titlecase_ascii(raw : String) -> String {
 }
 
 ///|
+/// Joins normalized subtags with `-`.
 fn join_subtags(parts : Array[String]) -> String {
   if parts.length() == 0 {
     return ""

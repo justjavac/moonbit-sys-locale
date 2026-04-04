@@ -1,4 +1,5 @@
 ///|
+/// Prints every preferred locale tag in order.
 fn main {
   let locales = @sys_locale.preferred()
   if locales.length() == 0 {

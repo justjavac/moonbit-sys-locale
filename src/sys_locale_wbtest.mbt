@@ -1,4 +1,5 @@
 ///|
+/// Runs a callback with locale-related env vars temporarily cleared.
 fn with_locale_env_cleared(f : () -> Unit raise) -> Unit raise {
   let key_pairs = [
     ("LC_ALL", @env.get_env_var("LC_ALL")),
