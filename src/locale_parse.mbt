@@ -4,25 +4,39 @@ fn locales_from_raw_candidates(raw_candidates : Array[String]) -> Array[Locale] 
   let locales : Array[Locale] = []
   let seen : Map[String, Bool] = {}
   for raw in raw_candidates {
-    let pieces = split_locale_list(raw)
-    for piece in pieces {
-      match parse_locale(piece) {
-        Some(locale) =>
-          if seen.get(locale.tag) is None {
-            seen[locale.tag] = true
-            locales.push(locale)
-          }
-        None => ()
-      }
+    for piece in split_locale_list(raw) {
+      append_parsed_locale_if_new(locales, seen, piece)
     }
   }
   locales
 }
 
 ///|
+/// Appends a parsed locale only when its tag has not been seen yet.
+fn append_parsed_locale_if_new(
+  target : Array[Locale],
+  seen : Map[String, Bool],
+  raw : String,
+) -> Unit {
+  match parse_locale(raw) {
+    Some(locale) if seen.get(locale.tag) is None => {
+      seen[locale.tag] = true
+      target.push(locale)
+    }
+    _ => ()
+  }
+}
+
+///|
+/// Returns locale-related environment variable keys in precedence order.
+fn locale_env_keys() -> Array[String] {
+  ["LC_ALL", "LC_MESSAGES", "LANGUAGE", "LANG"]
+}
+
+///|
 /// Appends locale-related environment variable values in precedence order.
 fn append_env_locale_candidates(target : Array[String]) -> Unit {
-  for key in ["LC_ALL", "LC_MESSAGES", "LANGUAGE", "LANG"] {
+  for key in locale_env_keys() {
     match @env.get_env_var(key) {
       Some(value) => push_candidate(target, value)
       None => ()
@@ -46,19 +60,13 @@ fn split_locale_list(raw : String) -> Array[String] {
   let mut buf = StringBuilder::new(size_hint=raw.length())
   for ch in raw {
     if ch == ':' || ch == ',' {
-      let item = buf.to_string().trim().to_string()
-      if item != "" {
-        items.push(item)
-      }
+      push_candidate(items, buf.to_string())
       buf = StringBuilder::new(size_hint=raw.length())
     } else {
       buf.write_char(ch)
     }
   }
-  let last = buf.to_string().trim().to_string()
-  if last != "" {
-    items.push(last)
-  }
+  push_candidate(items, buf.to_string())
   items
 }
 
@@ -69,7 +77,7 @@ fn parse_locale(raw : String) -> Locale? {
   if trimmed == "" {
     return None
   }
-  let cleaned = strip_after(strip_after(strip_after(trimmed, ";"), "."), "@")
+  let cleaned = strip_locale_suffixes(trimmed)
   if cleaned == "" || cleaned == "C" || cleaned == "POSIX" {
     return None
   }
@@ -120,6 +128,12 @@ fn parse_locale(raw : String) -> Locale? {
 }
 
 ///|
+/// Removes quality, encoding, and modifier suffixes from a locale string.
+fn strip_locale_suffixes(raw : String) -> String {
+  strip_after(strip_after(strip_after(raw, ";"), "."), "@")
+}
+
+///|
 /// Returns the prefix before the first marker.
 fn strip_after(raw : String, marker : StringView) -> String {
   match raw.split_once(marker) {
@@ -147,10 +161,7 @@ fn normalize_separators(raw : String) -> String {
 fn split_nonempty(raw : String, sep : StringView) -> Array[String] {
   let parts : Array[String] = []
   for part in raw.split(sep) {
-    let trimmed = part.trim().to_string()
-    if trimmed != "" {
-      parts.push(trimmed)
-    }
+    push_candidate(parts, part.to_string())
   }
   parts
 }

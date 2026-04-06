@@ -1,4 +1,56 @@
 ///|
+/// Captures the current locale-related environment variables.
+fn locale_env_snapshot() -> Array[(String, String?)] {
+  let snapshot : Array[(String, String?)] = []
+  for key in ["LC_ALL", "LC_MESSAGES", "LANGUAGE", "LANG"] {
+    snapshot.push((key, @env.get_env_var(key)))
+  }
+  snapshot
+}
+
+///|
+/// Applies locale-related environment variable overrides.
+fn apply_locale_env(entries : Array[(String, String?)]) -> Unit {
+  for pair in entries {
+    let (key, value) = pair
+    match value {
+      Some(existing) => @env.set_env_var(key, existing)
+      None => @env.unset_env_var(key)
+    }
+  }
+}
+
+///|
+/// Runs a callback with locale-related environment variables temporarily set.
+fn with_locale_env(
+  entries : Array[(String, String?)],
+  f : () -> Unit raise,
+) -> Unit raise {
+  let snapshot = locale_env_snapshot()
+  apply_locale_env(entries)
+  try f() catch {
+    e => {
+      apply_locale_env(snapshot)
+      raise e
+    }
+  } noraise {
+    _ => apply_locale_env(snapshot)
+  }
+}
+
+///|
+/// Asserts that the actual tags begin with the expected tags.
+fn assert_locale_tag_prefix(
+  actual : Array[String],
+  expected : Array[String],
+) -> Unit raise {
+  assert_true(actual.length() >= expected.length())
+  for i in 0..<expected.length() {
+    assert_eq(actual[i], expected[i])
+  }
+}
+
+///|
 test "parse normalizes POSIX locales" {
   inspect(
     @sys_locale.parse("en_US.UTF-8"),
@@ -25,32 +77,19 @@ test "parse rejects empty or fallback C locales" {
 
 ///|
 test "preferred uses environment overrides first" {
-  let key_pairs = [
-    ("LC_ALL", @env.get_env_var("LC_ALL")),
-    ("LC_MESSAGES", @env.get_env_var("LC_MESSAGES")),
-    ("LANGUAGE", @env.get_env_var("LANGUAGE")),
-    ("LANG", @env.get_env_var("LANG")),
-  ]
-
-  @env.set_env_var("LC_ALL", "de_DE.UTF-8")
-  @env.set_env_var("LC_MESSAGES", "it_IT.UTF-8")
-  @env.set_env_var("LANGUAGE", "fr_FR:en_US.UTF-8")
-  @env.set_env_var("LANG", "ja_JP.UTF-8")
-
-  let tags = @sys_locale.preferred_tags()
-  assert_true(tags.length() >= 5)
-  assert_eq(tags[0], "de-DE")
-  assert_eq(tags[1], "it-IT")
-  assert_eq(tags[2], "fr-FR")
-  assert_eq(tags[3], "en-US")
-  assert_eq(tags[4], "ja-JP")
-  inspect(@sys_locale.current_tag(), content="Some(\"de-DE\")")
-
-  for pair in key_pairs {
-    let (key, value) = pair
-    match value {
-      Some(existing) => @env.set_env_var(key, existing)
-      None => @env.unset_env_var(key)
-    }
-  }
+  with_locale_env(
+    [
+      ("LC_ALL", Some("de_DE.UTF-8")),
+      ("LC_MESSAGES", Some("it_IT.UTF-8")),
+      ("LANGUAGE", Some("fr_FR:en_US.UTF-8")),
+      ("LANG", Some("ja_JP.UTF-8")),
+    ],
+    fn() raise {
+      let tags = @sys_locale.preferred_tags()
+      assert_locale_tag_prefix(tags, [
+        "de-DE", "it-IT", "fr-FR", "en-US", "ja-JP",
+      ])
+      inspect(@sys_locale.current_tag(), content="Some(\"de-DE\")")
+    },
+  )
 }

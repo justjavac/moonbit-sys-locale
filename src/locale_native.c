@@ -6,6 +6,7 @@
 #ifdef _WIN32
 #include <windows.h>
 
+/* Writes the active locale into buffer and reports the required UTF-8 byte count. */
 int32_t sys_locale_native_current(uint8_t *buffer, int32_t len) {
   if (buffer == NULL || len <= 0) {
     return 0;
@@ -15,6 +16,15 @@ int32_t sys_locale_native_current(uint8_t *buffer, int32_t len) {
   int wide_len = GetUserDefaultLocaleName(wide_locale, LOCALE_NAME_MAX_LENGTH);
   if (wide_len <= 1) {
     return 0;
+  }
+
+  int required_len =
+      WideCharToMultiByte(CP_UTF8, 0, wide_locale, -1, NULL, 0, NULL, NULL);
+  if (required_len <= 1) {
+    return 0;
+  }
+  if (required_len > len) {
+    return required_len - 1;
   }
 
   int utf8_len = WideCharToMultiByte(
@@ -31,6 +41,7 @@ int32_t sys_locale_native_current(uint8_t *buffer, int32_t len) {
 
 #include <locale.h>
 
+/* Writes the active locale into buffer and reports the required UTF-8 byte count. */
 int32_t sys_locale_native_current(uint8_t *buffer, int32_t len) {
   if (buffer == NULL || len <= 0) {
     return 0;
@@ -49,7 +60,7 @@ int32_t sys_locale_native_current(uint8_t *buffer, int32_t len) {
 
   size_t locale_len = strlen(locale);
   if ((int32_t)locale_len >= len) {
-    locale_len = (size_t)(len - 1);
+    return (int32_t)locale_len;
   }
   memcpy(buffer, locale, locale_len);
   buffer[locale_len] = 0;
