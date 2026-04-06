@@ -30,21 +30,36 @@ fn locale_tag(locale : Locale?) -> String? {
 }
 
 ///|
-/// Returns the first preferred locale exposed by the current runtime.
+/// Returns the highest-priority locale exposed by the current runtime.
 ///
-/// This is equivalent to taking the first element from `preferred()`, while
-/// keeping the common single-locale lookup easy to read.
+/// The result is the first valid locale from `preferred()`, so it follows the
+/// package's full discovery order: environment overrides such as `LC_ALL`,
+/// `LC_MESSAGES`, `LANGUAGE`, and `LANG`, followed by the native system locale
+/// when available.
+///
+/// The returned `Locale` is already normalized:
+/// - separators use `-`
+/// - language subtags are lowercase
+/// - script subtags are title-cased
+/// - region subtags are uppercase when alphabetic
+///
+/// # Returns
+///
+/// - `Some(locale)` when at least one preferred locale candidate can be parsed
+/// - `None` when no candidate is available or every candidate is invalid
 ///
 /// Example:
-/// ```
-/// let current = @sys_locale.current()
-/// let preferred = @sys_locale.preferred()
-/// match current {
-///   Some(locale) => {
-///     assert_true(preferred.length() > 0)
-///     assert_eq(preferred[0], locale)
+/// ```mbt check
+/// test "current matches the first preferred locale" {
+///   let current = @sys_locale.current()
+///   let preferred = @sys_locale.preferred()
+///   match current {
+///     Some(locale) => {
+///       assert_true(preferred.length() > 0)
+///       assert_eq(preferred[0], locale)
+///     }
+///     None => assert_eq(preferred.length(), 0)
 ///   }
-///   None => assert_eq(preferred.length(), 0)
 /// }
 /// ```
 pub fn current() -> Locale? {
@@ -54,18 +69,29 @@ pub fn current() -> Locale? {
 ///|
 /// Returns the normalized tag for the current locale.
 ///
-/// This helper is useful when only the canonical locale identifier is needed
-/// and the structured `Locale` fields are not required.
+/// This is the tag-only form of `current()`. Use it when callers only need the
+/// canonical locale identifier and do not need the parsed `language`, `script`,
+/// or `region` fields.
+///
+/// The returned tag uses the same normalization rules as `parse()`, such as
+/// converting `en_US.UTF-8` into `en-US`.
+///
+/// # Returns
+///
+/// - `Some(tag)` when `current()` resolves to a valid locale
+/// - `None` when no valid current locale can be discovered
 ///
 /// Example:
-/// ```
-/// assert_eq(
-///   @sys_locale.current_tag(),
-///   match @sys_locale.current() {
-///     Some(locale) => Some(locale.tag)
-///     None => None
-///   },
-/// )
+/// ```mbt check
+/// test "current_tag mirrors current" {
+///   assert_eq(
+///     @sys_locale.current_tag(),
+///     match @sys_locale.current() {
+///       Some(locale) => Some(locale.tag)
+///       None => None
+///     },
+///   )
+/// }
 /// ```
 pub fn current_tag() -> String? {
   locale_tag(current())
@@ -74,17 +100,33 @@ pub fn current_tag() -> String? {
 ///|
 /// Returns all preferred locales discovered from the current runtime.
 ///
-/// Locale values can come from environment overrides such as `LC_ALL` and
-/// `LANGUAGE`, plus the native system locale when available. Duplicates are
-/// removed after normalization while preserving preference order.
+/// Locale candidates are collected in this order:
+/// - `LC_ALL`
+/// - `LC_MESSAGES`
+/// - `LANGUAGE`
+/// - `LANG`
+/// - the native system locale reported by the current platform
+///
+/// Each raw candidate is normalized before it is returned:
+/// - whitespace is trimmed
+/// - POSIX separators such as `_` are converted to `-`
+/// - encoding, modifier, and quality suffixes after `.`, `@`, and `;` are removed
+/// - duplicate locale tags are dropped while preserving first-seen order
+///
+/// # Returns
+///
+/// An array of normalized `Locale` values in preference order. The array may
+/// be empty when no valid locale can be detected.
 ///
 /// Example:
-/// ```
-/// let locales = @sys_locale.preferred()
-/// let tags = @sys_locale.preferred_tags()
-/// assert_eq(locales.length(), tags.length())
-/// for i in 0..<locales.length() {
-///   assert_eq(locales[i].tag, tags[i])
+/// ```mbt check
+/// test "preferred and preferred_tags stay aligned" {
+///   let locales = @sys_locale.preferred()
+///   let tags = @sys_locale.preferred_tags()
+///   assert_eq(locales.length(), tags.length())
+///   for i in 0..<locales.length() {
+///     assert_eq(locales[i].tag, tags[i])
+///   }
 /// }
 /// ```
 pub fn preferred() -> Array[Locale] {
@@ -94,18 +136,26 @@ pub fn preferred() -> Array[Locale] {
 ///|
 /// Returns the normalized tags for all preferred locales.
 ///
-/// This is the tag-only form of `preferred()`, useful when consumers only need
-/// canonical locale identifiers.
+/// This is the tag-only form of `preferred()`. It keeps the same preference
+/// order and deduplication rules, but returns only canonical locale tags
+/// instead of full `Locale` records.
+///
+/// # Returns
+///
+/// An array of normalized locale tags, possibly empty when no valid locale can
+/// be found.
 ///
 /// Example:
-/// ```
-/// let tags = @sys_locale.preferred_tags()
-/// match @sys_locale.current_tag() {
-///   Some(tag) => {
-///     assert_true(tags.length() > 0)
-///     assert_eq(tags[0], tag)
+/// ```mbt check
+/// test "preferred_tags starts with current_tag when present" {
+///   let tags = @sys_locale.preferred_tags()
+///   match @sys_locale.current_tag() {
+///     Some(tag) => {
+///       assert_true(tags.length() > 0)
+///       assert_eq(tags[0], tag)
+///     }
+///     None => ()
 ///   }
-///   None => ()
 /// }
 /// ```
 pub fn preferred_tags() -> Array[String] {
@@ -119,17 +169,33 @@ pub fn preferred_tags() -> Array[String] {
 ///|
 /// Parses a raw locale string into a normalized `Locale`.
 ///
-/// Common POSIX forms such as `en_US.UTF-8` are accepted and normalized to a
-/// BCP 47 style tag like `en-US`. Empty input, malformed subtags, and fallback
-/// locales such as `C` and `POSIX` return `None`.
+/// This parser accepts common POSIX-style locale strings such as
+/// `en_US.UTF-8`, `zh_Hans_CN`, and `fr_FR@euro`, then normalizes them into a
+/// BCP 47 style representation.
+///
+/// Normalization includes:
+/// - trimming surrounding whitespace
+/// - removing suffixes after `.`, `@`, and `;`
+/// - converting `_` separators into `-`
+/// - canonicalizing subtag casing
+///
+/// The parser rejects empty input, malformed subtags, and fallback locales
+/// such as `C` and `POSIX`.
+///
+/// # Returns
+///
+/// - `Some(locale)` when the input can be normalized into a valid locale
+/// - `None` when the input is empty, unsupported, or malformed
 ///
 /// Example:
-/// ```
-/// inspect(
-///   @sys_locale.parse("zh_Hans_CN.UTF-8"),
-///   content="Some({tag: \"zh-Hans-CN\", language: \"zh\", script: Some(\"Hans\"), region: Some(\"CN\")})",
-/// )
-/// inspect(@sys_locale.parse("C.UTF-8"), content="None")
+/// ```mbt check
+/// test "parse normalizes locale strings" {
+///   inspect(
+///     @sys_locale.parse("zh_Hans_CN.UTF-8"),
+///     content="Some({tag: \"zh-Hans-CN\", language: \"zh\", script: Some(\"Hans\"), region: Some(\"CN\")})",
+///   )
+///   inspect(@sys_locale.parse("C.UTF-8"), content="None")
+/// }
 /// ```
 pub fn parse(raw : String) -> Locale? {
   parse_locale(raw)
@@ -138,13 +204,23 @@ pub fn parse(raw : String) -> Locale? {
 ///|
 /// Returns the canonical locale tag for a raw locale string.
 ///
-/// This is a convenience wrapper around `parse()` when only the normalized tag
-/// string is needed.
+/// This convenience wrapper around `parse()` keeps only the normalized tag,
+/// which is useful when callers do not need the structured `Locale` record.
+///
+/// It follows the same acceptance and rejection rules as `parse()`, so invalid
+/// or unsupported locale strings still return `None`.
+///
+/// # Returns
+///
+/// - `Some(tag)` when `raw` can be normalized into a valid locale tag
+/// - `None` when `raw` is empty, unsupported, or malformed
 ///
 /// Example:
-/// ```
-/// inspect(@sys_locale.canonicalize("en_US.UTF-8"), content="Some(\"en-US\")")
-/// inspect(@sys_locale.canonicalize("fr_FR@euro"), content="Some(\"fr-FR\")")
+/// ```mbt check
+/// test "canonicalize returns normalized tags" {
+///   inspect(@sys_locale.canonicalize("en_US.UTF-8"), content="Some(\"en-US\")")
+///   inspect(@sys_locale.canonicalize("fr_FR@euro"), content="Some(\"fr-FR\")")
+/// }
 /// ```
 pub fn canonicalize(raw : String) -> String? {
   locale_tag(parse(raw))
