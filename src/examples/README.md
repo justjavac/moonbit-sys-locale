@@ -5,13 +5,12 @@ These examples are small usage snippets for `justjavac/sys_locale`.
 ## Current locale
 
 See [`current_locale/main.mbt`](current_locale/main.mbt) for a minimal example
-that reads the current locale and prints the normalized tag.
+that reads `current_tag()` and prints the normalized tag.
 
 ## Preferred locales
 
 See [`preferred_locales/main.mbt`](preferred_locales/main.mbt) for iterating
-over every locale discovered from the process environment and native system
-fallback.
+over every normalized tag returned by `preferred_tags()`.
 
 ## Running the snippets
 

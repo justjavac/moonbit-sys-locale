@@ -29,8 +29,8 @@ moon add justjavac/sys_locale
 ## Example
 
 ```moonbit
-match @sys_locale.current() {
-  Some(locale) => println(locale.tag)
+match @sys_locale.current_tag() {
+  Some(tag) => println(tag)
   None => println("locale unavailable")
 }
 ```

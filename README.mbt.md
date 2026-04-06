@@ -15,13 +15,13 @@ Read and normalize the current system locale in MoonBit.
 test "basic locale helpers" {
   assert_eq(@sys_locale.canonicalize("en_US.UTF-8"), Some("en-US"))
 
-  let current = @sys_locale.current_tag()
-  let preferred = @sys_locale.preferred_tags()
-
-  match current {
-    Some(_) => ()
-    None => ()
+  let tags = @sys_locale.preferred_tags()
+  match @sys_locale.current_tag() {
+    Some(tag) => {
+      assert_true(tags.length() > 0)
+      assert_eq(tags[0], tag)
+    }
+    None => assert_eq(tags.length(), 0)
   }
-  assert_true(preferred.length() >= 0)
 }
 ```
