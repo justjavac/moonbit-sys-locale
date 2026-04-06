@@ -1,23 +1,45 @@
 ///|
-/// Runs a callback with locale-related env vars temporarily cleared.
-fn with_locale_env_cleared(f : () -> Unit raise) -> Unit raise {
-  let key_pairs = [
-    ("LC_ALL", @env.get_env_var("LC_ALL")),
-    ("LC_MESSAGES", @env.get_env_var("LC_MESSAGES")),
-    ("LANGUAGE", @env.get_env_var("LANGUAGE")),
-    ("LANG", @env.get_env_var("LANG")),
-  ]
-  for pair in key_pairs {
-    let (key, _) = pair
-    @env.unset_env_var(key)
+/// Captures the current locale-related environment variables.
+fn locale_env_snapshot() -> Array[(String, String?)] {
+  let snapshot : Array[(String, String?)] = []
+  for key in locale_env_keys() {
+    snapshot.push((key, @env.get_env_var(key)))
   }
-  f()
-  for pair in key_pairs {
+  snapshot
+}
+
+///|
+/// Restores locale-related environment variables from a snapshot.
+fn restore_locale_env(snapshot : Array[(String, String?)]) -> Unit {
+  for pair in snapshot {
     let (key, value) = pair
     match value {
       Some(existing) => @env.set_env_var(key, existing)
       None => @env.unset_env_var(key)
     }
+  }
+}
+
+///|
+/// Clears locale-related environment variables.
+fn clear_locale_env() -> Unit {
+  for key in locale_env_keys() {
+    @env.unset_env_var(key)
+  }
+}
+
+///|
+/// Runs a callback with locale-related env vars temporarily cleared.
+fn with_locale_env_cleared(f : () -> Unit raise) -> Unit raise {
+  let snapshot = locale_env_snapshot()
+  clear_locale_env()
+  try f() catch {
+    e => {
+      restore_locale_env(snapshot)
+      raise e
+    }
+  } noraise {
+    _ => restore_locale_env(snapshot)
   }
 }
 
@@ -72,13 +94,13 @@ test "parsing helpers cover separator and candidate edge cases" {
   push_candidate(target, "   ")
   assert_eq(target.length(), 0)
 
-  let raw_candidates = locales_from_raw_candidates([
+  let locales = locales_from_raw_candidates([
     "", "C", "POSIX", "en_US.UTF-8,en_US", "fr_FR:de_DE",
   ])
-  assert_eq(raw_candidates.length(), 3)
-  assert_eq(raw_candidates[0].tag, "en-US")
-  assert_eq(raw_candidates[1].tag, "fr-FR")
-  assert_eq(raw_candidates[2].tag, "de-DE")
+  assert_eq(locales.length(), 3)
+  assert_eq(locales[0].tag, "en-US")
+  assert_eq(locales[1].tag, "fr-FR")
+  assert_eq(locales[2].tag, "de-DE")
 
   assert_eq(split_locale_list("en_US, , fr_FR:ja_JP"), [
     "en_US", "fr_FR", "ja_JP",
@@ -131,7 +153,10 @@ test "environment and native helpers cover none branches" {
   assert_eq(target, ["fr_FR.UTF-8"])
 
   let valid_utf8 : Bytes = Bytes::from_array([b'\xE4', b'\xB8', b'\xAD'])
-  inspect(decode_native_system_locale(valid_utf8, 3), content="Some(\"中\")")
+  assert_eq(
+    decode_native_system_locale(valid_utf8, 3),
+    Some(@utf8.decode(valid_utf8)),
+  )
   inspect(decode_native_system_locale(valid_utf8, 0), content="None")
   inspect(
     decode_native_system_locale(Bytes::from_array([b'\xFF']), 1),
