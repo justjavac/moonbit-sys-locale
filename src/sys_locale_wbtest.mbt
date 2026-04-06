@@ -157,9 +157,31 @@ test "environment and native helpers cover none branches" {
     decode_native_system_locale(valid_utf8, 3),
     Some(@utf8.decode(valid_utf8)),
   )
+  assert_eq(decode_native_system_locale(valid_utf8, 4), None)
   inspect(decode_native_system_locale(valid_utf8, 0), content="None")
   inspect(
     decode_native_system_locale(Bytes::from_array([b'\xFF']), 1),
     content="None",
   )
+}
+
+///|
+test "native buffer helpers cover retry decisions" {
+  assert_eq(native_locale_initial_buffer_size(), 128)
+  assert_eq(native_locale_max_buffer_size(), 4096)
+
+  assert_eq(next_native_locale_buffer_capacity(8, 7), None)
+  assert_eq(next_native_locale_buffer_capacity(8, 8), Some(16))
+  assert_eq(
+    next_native_locale_buffer_capacity(
+      native_locale_max_buffer_size(),
+      native_locale_max_buffer_size(),
+    ),
+    None,
+  )
+
+  match read_native_system_locale_with_capacity(1) {
+    Some(locale) => assert_true(locale != "")
+    None => ()
+  }
 }

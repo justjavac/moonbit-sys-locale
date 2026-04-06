@@ -44,18 +44,24 @@ fn decode_native_system_locale(buf : Bytes, written : Int) -> String? {
 }
 
 ///|
+/// Returns the next buffer size when the native read needs more space.
+fn next_native_locale_buffer_capacity(capacity : Int, written : Int) -> Int? {
+  if written < capacity || capacity >= native_locale_max_buffer_size() {
+    None
+  } else {
+    Some(capacity * 2)
+  }
+}
+
+///|
 /// Reads the current locale through the native shim using a growing buffer.
 fn read_native_system_locale_with_capacity(capacity : Int) -> String? {
   let buf = Bytes::new(capacity)
   let written = native_system_locale_ffi(buf, capacity)
-  if written >= capacity {
-    if capacity >= native_locale_max_buffer_size() {
-      None
-    } else {
-      read_native_system_locale_with_capacity(capacity * 2)
-    }
-  } else {
-    decode_native_system_locale(buf, written)
+  match next_native_locale_buffer_capacity(capacity, written) {
+    Some(next_capacity) =>
+      read_native_system_locale_with_capacity(next_capacity)
+    None => decode_native_system_locale(buf, written)
   }
 }
 
