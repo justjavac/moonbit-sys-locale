@@ -1,8 +1,12 @@
 # justjavac/sys_locale
 
-Read and normalize the current system locale in MoonBit.
+[![CI](https://github.com/justjavac/moonbit-sys-locale/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/justjavac/moonbit-sys-locale/actions/workflows/ci.yml)
+[![coverage](https://img.shields.io/codecov/c/github/justjavac/moonbit-sys-locale/main?label=coverage)](https://codecov.io/gh/justjavac/moonbit-sys-locale)
+[![linux](https://img.shields.io/codecov/c/github/justjavac/moonbit-sys-locale/main?flag=linux&label=linux)](https://codecov.io/gh/justjavac/moonbit-sys-locale)
+[![macos](https://img.shields.io/codecov/c/github/justjavac/moonbit-sys-locale/main?flag=macos&label=macos)](https://codecov.io/gh/justjavac/moonbit-sys-locale)
+[![windows](https://img.shields.io/codecov/c/github/justjavac/moonbit-sys-locale/main?flag=windows&label=windows)](https://codecov.io/gh/justjavac/moonbit-sys-locale)
 
-This package supports the `native` target only.
+Read and normalize the current system locale in MoonBit.
 
 ## Example
 
