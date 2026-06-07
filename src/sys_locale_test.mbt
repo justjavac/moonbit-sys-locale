@@ -46,33 +46,50 @@ fn assert_locale_tag_prefix(
 ) -> Unit raise {
   assert_true(actual.length() >= expected.length())
   for i in 0..<expected.length() {
-    assert_eq(actual[i], expected[i])
+    @test.assert_eq(actual[i], expected[i])
   }
 }
 
 ///|
 test "parse normalizes POSIX locales" {
-  inspect(
+  debug_inspect(
     @sys_locale.parse("en_US.UTF-8"),
-    content="Some({tag: \"en-US\", language: \"en\", script: None, region: Some(\"US\")})",
+    content=(
+      #|Some({ tag: "en-US", language: "en", script: None, region: Some("US") })
+    ),
   )
-  inspect(
+  debug_inspect(
     @sys_locale.parse("zh_Hans_CN"),
-    content="Some({tag: \"zh-Hans-CN\", language: \"zh\", script: Some(\"Hans\"), region: Some(\"CN\")})",
+    content=(
+      #|Some(
+      #|  {
+      #|    tag: "zh-Hans-CN",
+      #|    language: "zh",
+      #|    script: Some("Hans"),
+      #|    region: Some("CN"),
+      #|  },
+      #|)
+    ),
   )
 }
 
 ///|
 test "parse strips modifiers and quality values" {
-  inspect(@sys_locale.canonicalize("fr_FR@euro"), content="Some(\"fr-FR\")")
-  inspect(@sys_locale.canonicalize("en-US;q=0.8"), content="Some(\"en-US\")")
+  debug_inspect(
+    @sys_locale.canonicalize("fr_FR@euro"),
+    content="Some(\"fr-FR\")",
+  )
+  debug_inspect(
+    @sys_locale.canonicalize("en-US;q=0.8"),
+    content="Some(\"en-US\")",
+  )
 }
 
 ///|
 test "parse rejects empty or fallback C locales" {
-  inspect(@sys_locale.parse(""), content="None")
-  inspect(@sys_locale.parse("C.UTF-8"), content="None")
-  inspect(@sys_locale.parse(" POSIX "), content="None")
+  debug_inspect(@sys_locale.parse(""), content="None")
+  debug_inspect(@sys_locale.parse("C.UTF-8"), content="None")
+  debug_inspect(@sys_locale.parse(" POSIX "), content="None")
 }
 
 ///|
@@ -89,7 +106,7 @@ test "preferred uses environment overrides first" {
       assert_locale_tag_prefix(tags, [
         "de-DE", "it-IT", "fr-FR", "en-US", "ja-JP",
       ])
-      inspect(@sys_locale.current_tag(), content="Some(\"de-DE\")")
+      debug_inspect(@sys_locale.current_tag(), content="Some(\"de-DE\")")
     },
   )
 }

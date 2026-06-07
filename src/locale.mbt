@@ -8,7 +8,19 @@ pub struct Locale {
   language : String
   script : String?
   region : String?
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+/// Writes a derived debug representation to a `Show` logger.
+fn[T : Debug] write_debug_show(value : T, logger : &Logger) -> Unit {
+  logger.write_string(value.to_repr().to_string())
+}
+
+///|
+/// Renders a locale using the derived debug representation.
+pub impl Show for Locale with fn output(self, logger : &Logger) -> Unit {
+  write_debug_show(self, logger)
+}
 
 ///|
 /// Returns the first locale from a non-empty list.
@@ -62,9 +74,9 @@ fn locale_tag(locale : Locale?) -> String? {
 ///   match current {
 ///     Some(locale) => {
 ///       assert_true(preferred.length() > 0)
-///       assert_eq(preferred[0], locale)
+///       @test.assert_eq(preferred[0], locale)
 ///     }
-///     None => assert_eq(preferred.length(), 0)
+///     None => @test.assert_eq(preferred.length(), 0)
 ///   }
 /// }
 /// ```
@@ -98,7 +110,7 @@ pub fn current() -> Locale? {
 /// Example:
 /// ```mbt check
 /// test "current_tag mirrors current" {
-///   assert_eq(
+///   @test.assert_eq(
 ///     @sys_locale.current_tag(),
 ///     match @sys_locale.current() {
 ///       Some(locale) => Some(locale.tag)
@@ -148,9 +160,9 @@ pub fn current_tag() -> String? {
 /// test "preferred and preferred_tags stay aligned" {
 ///   let locales = @sys_locale.preferred()
 ///   let tags = @sys_locale.preferred_tags()
-///   assert_eq(locales.length(), tags.length())
+///   @test.assert_eq(locales.length(), tags.length())
 ///   for i in 0..<locales.length() {
-///     assert_eq(locales[i].tag, tags[i])
+///     @test.assert_eq(locales[i].tag, tags[i])
 ///   }
 /// }
 /// ```
@@ -187,7 +199,7 @@ pub fn preferred() -> Array[Locale] {
 ///   match @sys_locale.current_tag() {
 ///     Some(tag) => {
 ///       assert_true(tags.length() > 0)
-///       assert_eq(tags[0], tag)
+///       @test.assert_eq(tags[0], tag)
 ///     }
 ///     None => ()
 ///   }
@@ -241,11 +253,20 @@ pub fn preferred_tags() -> Array[String] {
 /// Example:
 /// ```mbt check
 /// test "parse normalizes locale strings" {
-///   inspect(
+///   debug_inspect(
 ///     @sys_locale.parse("zh_Hans_CN.UTF-8"),
-///     content="Some({tag: \"zh-Hans-CN\", language: \"zh\", script: Some(\"Hans\"), region: Some(\"CN\")})",
+///     content=(
+///       #|Some(
+///       #|  {
+///       #|    tag: "zh-Hans-CN",
+///       #|    language: "zh",
+///       #|    script: Some("Hans"),
+///       #|    region: Some("CN"),
+///       #|  },
+///       #|)
+///     ),
 ///   )
-///   inspect(@sys_locale.parse("C.UTF-8"), content="None")
+///   debug_inspect(@sys_locale.parse("C.UTF-8"), content="None")
 /// }
 /// ```
 pub fn parse(raw : String) -> Locale? {
@@ -278,8 +299,14 @@ pub fn parse(raw : String) -> Locale? {
 /// Example:
 /// ```mbt check
 /// test "canonicalize returns normalized tags" {
-///   inspect(@sys_locale.canonicalize("en_US.UTF-8"), content="Some(\"en-US\")")
-///   inspect(@sys_locale.canonicalize("fr_FR@euro"), content="Some(\"fr-FR\")")
+///   debug_inspect(
+///     @sys_locale.canonicalize("en_US.UTF-8"),
+///     content="Some(\"en-US\")",
+///   )
+///   debug_inspect(
+///     @sys_locale.canonicalize("fr_FR@euro"),
+///     content="Some(\"fr-FR\")",
+///   )
 /// }
 /// ```
 pub fn canonicalize(raw : String) -> String? {

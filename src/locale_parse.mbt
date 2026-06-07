@@ -47,7 +47,7 @@ fn append_env_locale_candidates(target : Array[String]) -> Unit {
 ///|
 /// Trims and stores a non-empty raw locale candidate.
 fn push_candidate(target : Array[String], raw : String) -> Unit {
-  let trimmed = raw.trim().to_string()
+  let trimmed = raw.trim().to_owned()
   if trimmed != "" {
     target.push(trimmed)
   }
@@ -73,7 +73,7 @@ fn split_locale_list(raw : String) -> Array[String] {
 ///|
 /// Parses a raw locale string into a normalized locale record.
 fn parse_locale(raw : String) -> Locale? {
-  let trimmed = raw.trim().to_string()
+  let trimmed = raw.trim().to_owned()
   if trimmed == "" {
     return None
   }
@@ -124,7 +124,7 @@ fn parse_locale(raw : String) -> Locale? {
     parts.push(extra)
   }
 
-  Some(Locale::{ tag: join_subtags(parts), language, script, region })
+  Some({ tag: join_subtags(parts), language, script, region })
 }
 
 ///|
@@ -137,7 +137,7 @@ fn strip_locale_suffixes(raw : String) -> String {
 /// Returns the prefix before the first marker.
 fn strip_after(raw : String, marker : StringView) -> String {
   match raw.split_once(marker) {
-    Some((prefix, _)) => prefix.to_string()
+    Some((prefix, _)) => prefix.to_owned()
     None => raw
   }
 }
@@ -161,7 +161,7 @@ fn normalize_separators(raw : String) -> String {
 fn split_nonempty(raw : String, sep : StringView) -> Array[String] {
   let parts : Array[String] = []
   for part in raw.split(sep) {
-    push_candidate(parts, part.to_string())
+    push_candidate(parts, part.to_owned())
   }
   parts
 }
