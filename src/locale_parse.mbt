@@ -2,7 +2,7 @@
 /// Parses and deduplicates locale candidates in preference order.
 fn locales_from_raw_candidates(raw_candidates : Array[String]) -> Array[Locale] {
   let locales : Array[Locale] = []
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for raw in raw_candidates {
     for piece in split_locale_list(raw) {
       append_parsed_locale_if_new(locales, seen, piece)

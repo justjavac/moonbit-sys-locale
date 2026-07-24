@@ -1,6 +1,6 @@
 name = "justjavac/sys_locale"
 
-version = "0.1.6"
+version = "0.1.7"
 
 readme = "README.mbt.md"
 
@@ -16,6 +16,4 @@ preferred_target = "native"
 
 supported_targets = "+native"
 
-options(
-  source: "src",
-)
+source = "src"
